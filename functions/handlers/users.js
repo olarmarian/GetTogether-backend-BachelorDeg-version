@@ -48,7 +48,7 @@ exports.signup = async (req, res) => {
                     role:newUser.role,
                     createdAt: new Date().toISOString()
                 };
-                return db.doc(`/users/${userCredentials.userId}`)
+                return db.doc(`/users/${userId}`)
                         .set(userCredentials);
             })
             .then(() => {

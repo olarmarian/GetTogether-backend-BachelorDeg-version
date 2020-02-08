@@ -31,7 +31,9 @@ const {
     uploadImage,
     getTheNewest,
     getTheMostPopular,
-    getTheBiggestRate
+    getTheBiggestRate,
+    getReviews,
+    getMetadataForLocals
 } = require('./handlers/locals');
 
 //MIDDLEWARES
@@ -58,15 +60,17 @@ app.get('/users/reservation/:reservationId/reject',FBAuth,rejectReservation);
 
 //Locals routes
 app.get('/locals',getLocals);
+app.get('/locals/metadata',getMetadataForLocals);
 app.get('/locals/specific/:specific',getLocalsBySpecific);
 app.get('/locals/tag/:tag',getLocalsByTag);
+app.get('/locals/:name',getLocalsByName);
 app.get('/locals/name/:name',getLocalsByName);
 app.get('/locals/location/:location',getLocalsByLocation);
 app.get('/locals/reservations',FBAuth,getReservations);
+app.get('/locals/:localId/reviews',getReviews);
 app.get('/locals/the-most-popular',getTheMostPopular);
 app.get('/locals/the-newest',getTheNewest);
 app.get('/locals/the-biggest-rate',getTheBiggestRate);
-
 app.post('/locals/save',FBAuth,saveLocal);
 app.post('/locals/:localId/menu/save',FBAuth,saveLocalMenu);
 app.post('/locals/:localId/menu/edit',FBAuth,updateLocalMenu);

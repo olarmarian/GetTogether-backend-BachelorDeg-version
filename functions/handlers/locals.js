@@ -1,96 +1,172 @@
 const {admin, db } = require('../util/admin');
-
+const  config  = require('../util/config')
 exports.getLocals = async (req, res) => {
+    let locals = [];
     await db.collection('locals')
         .orderBy('location','asc')    
         .get()
         .then(doc => {
-            let locals = [];
             doc.forEach(data => {
                 locals.push({
-                    localId:data.data().id,
-                    userId:data.data().userId,
+                    localId:data.id,
+                    userId:data.data().userEmail,
                     name:data.data().name,
+                    searchName:data.data().searchName,
                     location:data.data().location,
                     specific:data.data().specific,
                     phone:data.data().phone,
-                    tags:data.data().tags
+                    tags:data.data().tags,
+                    imagesUrl:[]
                 })
             })
-            return res.status(200).json(locals);
         })
         .catch(err => {
             console.error(err);
             return res.status(500).json({error:err.code});
         })
+    
+    await db.collection('images')
+    .get()
+    .then(doc => {
+        doc.forEach(data=>{
+            locals.forEach(local => {
+                if( local.localId === data.data().localId){
+                    local.imagesUrl.push(data.data().imageUrl);
+                }
+            })
+        })
+        return res.status(200).json(locals);
+    })
+    .catch(err => {
+        console.error(err);
+        return res.status(500).json({error:err.code});
+    })
+}
+
+exports.getMetadataForLocals = async (req,res) =>{
+    let metadata = {
+        tags:[],
+        specifics:[],
+    }
+    await db.collection('locals')
+        .get()
+        .then(doc =>{
+            doc.forEach(data=>{
+                data.data().tags.forEach(tag => {
+                    metadata.tags.push(tag);
+                })
+                data.data().specific.forEach(specific=>{
+                    metadata.specifics.push(specific);
+                })
+            })
+            resultMetadata = {
+                tags:[...new Set(metadata.tags)],
+                specifics:[...new Set(metadata.specifics)]
+            }
+            return res.status(200).json(resultMetadata)
+        })
+        .catch(err =>{
+            return res.status(500).json({err:err.code})
+        })
+}
+
+exports.getStarsForLocalById = async (req,res)=>{
+    let reviews = [];
+    await db.collection('reviews')
+            .get()
+            .then(doc => {
+                doc.forEach(data=>{
+                    if(req.body.localId===data.data().localId){
+                        reviews.push({
+                            stars:data.data().stars
+                        });
+                    }
+                })
+            })
+            .then(()=>{
+                let average = reviews.reduce((a,b)=> a+b,0) / reviews.length
+                return res.status(200).json(average);
+            })
+            .catch(err => {
+                console.error(err)
+                return res.status(500).json({error:err.code});
+            })
 }
 
 exports.getLocalsByTag = async (req, res) => {
+    let locals = [];
     await db.collection('locals')
         .where('tags','array-contains',"#"+req.params.tag)
         .get()
         .then(doc => {
-            let locals = [];
             doc.forEach(data => {
                 locals.push({
-                    localId:data.data().id,
-                    userId:data.data().userId,
+                    localId:data.id,
+                    userId:data.data().userEmail,
                     name:data.data().name,
+                    searchName:data.data().searchName,
                     location:data.data().location,
                     specific:data.data().specific,
                     phone:data.data().phone,
-                    tags:data.data().tags
+                    tags:data.data().tags,
+                    imagesUrl: []
                 })
             })
-            return res.status(200).json(locals);
         })
         .catch(err => {
             console.error(err);
             return res.status(500).json({error:err.code});
         })
+    await db.collection('images')
+    .get()
+    .then(doc => {
+        doc.forEach(data=>{
+            locals.forEach(local => {
+                if( local.localId === data.data().localId){
+                    local.imagesUrl.push(data.data().imageUrl);
+                }
+            })
+        })
+        return res.status(200).json(locals);
+    })
+    .catch(err => {
+        console.error(err);
+        return res.status(500).json({error:err.code});
+    })
 }
 exports.getLocalsBySpecific = async (req, res) => {
+    let locals = [];
     await db.collection('locals')
         .orderBy('location','asc')
         .where('specific','==',req.params.specific)
         .get()
         .then(doc => {
-            let locals = [];
             doc.forEach(data => {
                 locals.push({
-                    localId:data.data().id,
-                    userId:data.data().userId,
+                    localId:data.id,
+                    userId:data.data().userEmail,
                     name:data.data().name,
+                    searchName:data.data().searchName,
                     location:data.data().location,
                     specific:data.data().specific,
                     phone:data.data().phone,
-                    tags:data.data().tags
+                    tags:data.data().tags,
+                    imagesUrl: []
                 })
             })
-            return res.status(200).json(locals);
         })
         .catch(err => {
             console.error(err);
             return res.status(500).json({error:err.code});
         })
-}
-
-exports.getTheNewest = async (req, res) => {
-    await db.collection('locals')
-            .orderBy('createdAt','asc')
-            .limit(4)
+        await db.collection('images')
             .get()
             .then(doc => {
-                let locals = [];
-                doc.forEach(data => {
-                    locals.push({
-                        restaurantId:data.data().id,
-                        userId:data.data().userId,
-                        name:data.data().name,
-                        location:data.data().location,
-                        specific:data.data().specific,
-                        phone:data.data().phone,
-                        tags:data.data().tags
+                doc.forEach(data=>{
+                    locals.forEach(local => {
+                        if( local.localId === data.data().localId){
+                            local.imagesUrl.push(data.data().imageUrl);
+                        }
                     })
                 })
                 return res.status(200).json(locals);
@@ -99,6 +175,49 @@ exports.getTheNewest = async (req, res) => {
                 console.error(err);
                 return res.status(500).json({error:err.code});
             })
+}
+
+exports.getTheNewest = async (req, res) => {
+    let locals = [];
+    await db.collection('locals')
+            .orderBy('createdAt','asc')
+            .limit(4)
+            .get()
+            .then(doc => {
+                doc.forEach(data => {
+                    locals.push({
+                        localId:data.id,
+                        userId:data.data().userEmail,
+                        name:data.data().name,
+                        searchName:data.data().searchName,
+                        location:data.data().location,
+                        specific:data.data().specific,
+                        phone:data.data().phone,
+                        tags:data.data().tags,
+                        imagesUrl: []
+                    })
+                })
+            })
+            .catch(err => {
+                console.error(err);
+                return res.status(500).json({error:err.code});
+            })
+            await db.collection('images')
+                .get()
+                .then(doc => {
+                    doc.forEach(data=>{
+                        locals.forEach(local => {
+                            if( local.localId === data.data().localId){
+                                local.imagesUrl.push(data.data().imageUrl);
+                            }
+                        })
+                    })
+                    return res.status(200).json(locals);
+                })
+                .catch(err => {
+                    console.error(err);
+                    return res.status(500).json({error:err.code});
+                })
 }
 
 exports.getTheMostPopular = async (req, res) => {
@@ -118,7 +237,6 @@ exports.getTheMostPopular = async (req, res) => {
                 console.error(err);
                 return res.status(500).json({error:err.code});
             })
-    
     await db.collection('reservations')
             .get()
             .then(doc => {
@@ -210,21 +328,39 @@ exports.getTheBiggestRate = async (req, res) => {
 }
 
 exports.getLocalsByName = async (req, res) => {
+    let locals = [];
     await db.collection('locals')
             .orderBy('location','asc')
-            .where('name','==',req.params.name)
+            .where("searchName","==",req.params.name)
             .get()
             .then(doc => {
-                let locals = [];
                 doc.forEach(data => {
                     locals.push({
-                        restaurantId:data.data().id,
-                        userId:data.data().userId,
+                        localId:data.id,
+                        userId:data.data().userEmail,
                         name:data.data().name,
+                        searchName:data.data().searchName,
                         location:data.data().location,
                         specific:data.data().specific,
                         phone:data.data().phone,
-                        tags:data.data().tags
+                        tags:data.data().tags,
+                        imagesUrl: []
+                    })
+                
+                })
+            })
+            .catch(err => {
+                console.error(err);
+                return res.status(500).json({error:err.code});
+            })
+        await db.collection('images')
+            .get()
+            .then(doc => {
+                doc.forEach(data=>{
+                    locals.forEach(local => {
+                        if( local.localId === data.data().localId){
+                            local.imagesUrl.push(data.data().imageUrl);
+                        }
                     })
                 })
                 return res.status(200).json(locals);
@@ -244,34 +380,51 @@ exports.getLocalsByLocation = async (req, res) => {
                 let locals = [];
                 doc.forEach(data => {
                     locals.push({
-                        restaurantId:data.data().id,
-                        userId:data.data().userId,
+                        localId:data.id,
+                        userId:data.data().userEmail,
                         name:data.data().name,
+                        searchName:data.data().searchName,
                         location:data.data().location,
                         specific:data.data().specific,
                         phone:data.data().phone,
-                        tags:data.data().tags
+                        tags:data.data().tags,
+                        imagesUrl: []
                     })
                 })
-                return res.status(200).json(locals);
             })
             .catch(err => {
                 console.error(err);
                 return res.status(500).json({error:err.code});
             })
+            await db.collection('images')
+                .get()
+                .then(doc => {
+                    doc.forEach(data=>{
+                        locals.forEach(local => {
+                            if( local.localId === data.data().localId){
+                                local.imagesUrl.push(data.data().imageUrl);
+                            }
+                        })
+                    })
+                    return res.status(200).json(locals);
+                })
+                .catch(err => {
+                    console.error(err);
+                    return res.status(500).json({error:err.code});
+                })
 }
 
 exports.getReservations = async (req, res) => {
     await db.collection('reservations')
             .orderBy('createdAt','desc')
-            .where('restaurantId','==',req.params.reservationId)
+            .where('localId','==',req.params.reservationId)
             .get()
             .then(doc => {
                 let reservations = [];
                 doc.forEach(data => {
                     reservations.push({
                         reservationId:data.data().reservationId,
-                        restaurantId:data.data().restaurantId,
+                        localId:data.data().localId,
                         userId:data.data().userId,
                         hour:data.data().hour,
                         date:data.data().date,
@@ -285,11 +438,37 @@ exports.getReservations = async (req, res) => {
                 return res.status(500).json({error:err.code});
             })
 }
-
+exports.getReviews = async (req,res) =>{
+    let localId = req.params.localId;
+    await db.collection('reviews')
+        .orderBy('createdAt','desc')
+        .where('localId','==',localId)
+        .get()
+        .then(doc =>{
+            let reviews = [];
+            doc.forEach(data => {
+                if(data.data().localId === localId){
+                    reviews.push({
+                        userEmail:data.data().userEmail,                        
+                        createdAt:data.data().createdAt,                        
+                        localId :data.data().localId,                        
+                        stars :data.data().stars,                        
+                        text :data.data().text,                        
+                    })
+                }
+            });
+            return res.status(200).json(reviews);
+        })
+        .catch(err=>{
+            console.error(err);
+            return res.status(500).json({error:err.code});
+        })
+}
 exports.saveLocal = async (req, res) => {
     const newLocal = {
         userEmail:req.user.email,
         name:req.body.name,
+        searchName:req.body.name.replace(" ","-").toLowerCase(),
         location:req.body.location,
         specific:req.body.specific,
         phone:req.body.phone,
@@ -330,6 +509,7 @@ exports.updateLocal = async (req, res) => {
         .then(doc => {
             return doc.ref.update({
                 name:req.body.name,
+                searchName:req.body.name.replace(" ","-").toLowerCase(),
                 location:req.body.location,
                 specific:req.body.specific,
                 phone:req.body.phone,
@@ -394,6 +574,7 @@ exports.uploadImage = async (req, res) => {
         imageToBeUploaded = { filePath,mimetype };
         file.pipe(fs.createWriteStream(filePath));
     });
+
     await busboy.on('finish', async ()=>{
         await admin
             .storage()
@@ -409,7 +590,7 @@ exports.uploadImage = async (req, res) => {
             .then(()=>{
                 const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media`;
                 const newImage = {
-                    restaurantId:req.params.restaurantId,
+                    localId:req.params.localId,
                     imageUrl
                 }
                 return db.collection('/images')
@@ -424,7 +605,7 @@ exports.uploadImage = async (req, res) => {
             })
             .catch((err) => {
                 console.error(err);
-                return res.status(500).json({error:err});
+                return res.status(500).json({error:err+"sss"});
             });
     });
     await busboy.end(req.rawBody);
