@@ -12,14 +12,11 @@ module.exports = (req,res,next)=> {
     admin.auth().verifyIdToken(idToken)
         .then(decodedToken =>{
             req.user = decodedToken;
-            
-            return db.collection('users')
-                .where('userId','==',req.user.uid)
-                .limit(1)
+            return db.doc(`/users/${req.user.uid}`)
                 .get();
         })
         .then(data =>{
-            req.user.username =  data.docs[0].data().username;
+            req.user.email =  data.data().email;
             return next();
         })
         .catch(err =>{

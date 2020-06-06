@@ -12,7 +12,8 @@ const {
     searchHistory,
     reservationsHistory,
     saveReservation,
-    rejectReservation
+    rejectReservation,
+    getAccount
 } = require('./handlers/users');
 
 const {
@@ -33,7 +34,10 @@ const {
     getTheMostPopular,
     getTheBiggestRate,
     getReviews,
-    getMetadataForLocals
+    getMetadataForLocals,
+    getLocalTagsCategories,
+    getLocalSpecificsCategories,
+    getUserLocal
 } = require('./handlers/locals');
 
 //MIDDLEWARES
@@ -53,13 +57,17 @@ app.delete('/admin/locals/:localId/delete',()=>{});
 //Users routes
 app.post('/users/signup',signup);
 app.post('/users/login',login);
+app.get('/users/:userId',getAccount);
 app.get('/users/:userId/search-history',searchHistory);
-app.get('/users/:userId/reservations-history',reservationsHistory);
+app.get('/users/:userId/reservations-history',FBAuth,reservationsHistory);
 app.post('/users/reservation/save',FBAuth,saveReservation);
 app.get('/users/reservation/:reservationId/reject',FBAuth,rejectReservation);
 
 //Locals routes
 app.get('/locals',getLocals);
+app.get('/locals/user-local/:userEmail',FBAuth,getUserLocal)
+app.get('/locals/tags-categories', getLocalTagsCategories);
+app.get('/locals/specifics-categories', getLocalSpecificsCategories);
 app.get('/locals/metadata',getMetadataForLocals);
 app.get('/locals/specific/:specific',getLocalsBySpecific);
 app.get('/locals/tag/:tag',getLocalsByTag);

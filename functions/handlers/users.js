@@ -46,13 +46,14 @@ exports.signup = async (req, res) => {
                     password:newUser.password,
                     phone:newUser.phone,
                     role:newUser.role,
+                    localId: newUser.localId,
                     createdAt: new Date().toISOString()
                 };
                 return db.doc(`/users/${userId}`)
                         .set(userCredentials);
             })
             .then(() => {
-                return res.status(201).json({token});
+                return res.status(201).json({token,userId});
             })
             .catch(err => {
                 console.error(err);
@@ -74,13 +75,15 @@ exports.login = async (req, res) => {
     if(!valid){
         return res.status(401).json(errors);
     }
+    let userId;
     await firebase.auth()
             .signInWithEmailAndPassword(user.email,user.password)
             .then(data => {
+                userId = data.user.uid;
                 return data.user.getIdToken();
             })
             .then(token => {
-                return res.status(200).json({token});
+                return res.status(200).json({token,userId});
             })
             .catch(err => {
                 console.error(err);
@@ -90,6 +93,25 @@ exports.login = async (req, res) => {
                     return res.status(404).json({error:"User not found"});
                 }
             })
+}
+
+exports.getAccount = async( req, res) => {
+    await db.doc(`/users/${req.params.userId}`)
+        .get()
+        .then(doc => {
+            let user = {
+                name:doc.data().name,
+                email:doc.data().email,
+                phone:doc.data().phone,
+                role:doc.data().role,
+                createdAt: doc.data().createdAt
+            }
+            return res.status(200).json(user)
+        })
+        .catch( err => {
+            console.error(err);
+            return res.status(500).json({error: err.code});
+        })
 }
 
 exports.searchHistory = async (req, res) => {
@@ -114,16 +136,21 @@ exports.searchHistory = async (req, res) => {
 }
 
 exports.reservationsHistory = async (req, res) => {
-    await db.collection('/reservationhistory')
-            .where('userId','==',req.user.id)
+    await db.collection('reservations')
+            .where('userId','==',req.user.uid)
             .orderBy('createdAt','desc')
             .get()
             .then(doc => {
                 let history = [];
                 doc.forEach(data => {
                     history.push({
-                        reservationHistoryId:data.data().searchId,
-                        reservationId:data.data().reservationId,
+                        reservationId:data.id,
+                        date:data.data().date,
+                        hour:data.data().hour,
+                        localId:data.data().localId,
+                        status:data.data().status,
+                        seats:data.data().seats,
+                        createdAt:data.data().createdAt,
                     })
                 })
                 return res.status(200).json(history);
@@ -136,8 +163,9 @@ exports.reservationsHistory = async (req, res) => {
 
 exports.saveReservation = async (req, res) => {
     const reservation = {
-        userEmail:req.user.email,
+        userId:req.user.uid,
         localId:req.body.localId,
+        localName:req.body.localName,
         hour:req.body.hour,
         seats:req.body.seats,
         date:req.body.date,

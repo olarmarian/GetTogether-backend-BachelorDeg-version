@@ -9,7 +9,7 @@ exports.getLocals = async (req, res) => {
             doc.forEach(data => {
                 locals.push({
                     localId:data.id,
-                    userId:data.data().userEmail,
+                    userEmail:data.data().userEmail,
                     name:data.data().name,
                     searchName:data.data().searchName,
                     location:data.data().location,
@@ -36,6 +36,48 @@ exports.getLocals = async (req, res) => {
             })
         })
         return res.status(200).json(locals);
+    })
+    .catch(err => {
+        console.error(err);
+        return res.status(500).json({error:err.code});
+    })
+}
+
+exports.getUserLocal = async (req, res) => {
+    let local;
+    await db.collection('locals')
+        .where("userEmail","==",req.params.userEmail)
+        .limit(1)
+        .get()
+        .then(doc => {
+            doc.forEach(data => {
+                local = {
+                    localId:data.id,
+                    userEmail:data.data().userEmail,
+                    name:data.data().name,
+                    searchName:data.data().searchName,
+                    location:data.data().location,
+                    specific:data.data().specific,
+                    phone:data.data().phone,
+                    tags:data.data().tags,
+                    imagesUrl:[]
+                }
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            return res.status(500).json({error:err.code});
+        })
+    
+    await db.collection('images')
+    .get()
+    .then(doc => {
+        doc.forEach(data=>{
+            if( local.localId === data.data().localId){
+                local.imagesUrl.push(data.data().imageUrl);
+            }
+        })
+        return res.status(200).json(local);
     })
     .catch(err => {
         console.error(err);
@@ -470,7 +512,7 @@ exports.saveLocal = async (req, res) => {
         name:req.body.name,
         searchName:req.body.name.replace(" ","-").toLowerCase(),
         location:req.body.location,
-        specific:req.body.specific,
+        specific:req.body.specifics,
         phone:req.body.phone,
         tags:req.body.tags,
         createdAt:new Date().toISOString()
@@ -544,6 +586,39 @@ exports.reviewLocal = async (req, res) => {
             console.error(err);
             return res.status(500).json({error:"Something went wrong"});
         })
+}
+
+exports.getLocalSpecificsCategories = async ( req, res ) => {
+    const specifics = [
+        "pizza", 
+        "mancare italiana", 
+        "mancare internationala",
+        "mancare americana", 
+        "fast-food", 
+        "mancare romaneasca",
+        "fructe de mare", 
+        "cafea", 
+        "bar", 
+        "catering", 
+        "mancare frantuzeasca", 
+        "mancare vegetariana"]
+        return res.status(200).json(specifics);
+}
+
+exports.getLocalTagsCategories = async ( req, res ) => {
+    const tags = [
+        "#party",
+        "#laobere",
+        "#fine-dining",
+        "#chill",
+        "#old",
+        "#narghilea",
+        "#steakhouse",
+        "#barbeque",
+        "#club"
+    ]
+
+    return res.status(200).json(tags);
 }
 
 exports.saveLocalMenu = async (req, res) => {
