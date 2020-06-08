@@ -13,7 +13,8 @@ const {
     reservationsHistory,
     saveReservation,
     rejectReservation,
-    getAccount
+    getAccount,
+    addNewsletterEmail
 } = require('./handlers/users');
 
 const {
@@ -37,7 +38,8 @@ const {
     getMetadataForLocals,
     getLocalTagsCategories,
     getLocalSpecificsCategories,
-    getUserLocal
+    getUserLocal,
+    getFilteredLocals
 } = require('./handlers/locals');
 
 //MIDDLEWARES
@@ -62,6 +64,7 @@ app.get('/users/:userId/search-history',searchHistory);
 app.get('/users/:userId/reservations-history',FBAuth,reservationsHistory);
 app.post('/users/reservation/save',FBAuth,saveReservation);
 app.get('/users/reservation/:reservationId/reject',FBAuth,rejectReservation);
+app.post('/newsletter', addNewsletterEmail);
 
 //Locals routes
 app.get('/locals',getLocals);
@@ -69,6 +72,7 @@ app.get('/locals/user-local/:userEmail',FBAuth,getUserLocal)
 app.get('/locals/tags-categories', getLocalTagsCategories);
 app.get('/locals/specifics-categories', getLocalSpecificsCategories);
 app.get('/locals/metadata',getMetadataForLocals);
+app.get('/locals/tag=:tag&specific=:specific', getFilteredLocals);
 app.get('/locals/specific/:specific',getLocalsBySpecific);
 app.get('/locals/tag/:tag',getLocalsByTag);
 app.get('/locals/:name',getLocalsByName);

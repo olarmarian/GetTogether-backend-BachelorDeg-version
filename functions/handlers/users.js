@@ -6,8 +6,29 @@ firebase.initializeApp(config);
 
 const {
     validateSignUpData, 
-    validateLogInData
+    validateLogInData,
+    validateEmail
 } = require('../util/validators');
+
+exports.addNewsletterEmail = async (req, res) => {
+    
+    if(validateEmail(req.body.email)){
+        return res.status(401).json({message:"Invalid email"})
+    }
+
+    const email = {
+        email: req.body.email
+    };
+    await db.collection('newsletter-emails')
+        .add(email)
+        .then(() => {
+            return res.status(201).json({message:"Email registered to our newsletter!"});
+        })
+        .catch(err => {
+            console.error(err);
+            return res.status(500).json({error: err.code});
+        })
+}
 
 exports.signup = async (req, res) => {
     const newUser = {
@@ -58,7 +79,7 @@ exports.signup = async (req, res) => {
             .catch(err => {
                 console.error(err);
                 if(err.code === 'auth/email-already-in-use'){
-                    return res.status(500).json({error:'Email already in use'});
+                    return res.status(500).json({error:'This email is already in use'});
                 }else{
                     return res.status(500).json({error:err.code});
                 }

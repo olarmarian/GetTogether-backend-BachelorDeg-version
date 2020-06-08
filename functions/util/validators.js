@@ -13,12 +13,27 @@ const isEmail = (email)=>{
     return false;
 };
 
+exports.validateEmail = (email) =>{
+    return isEmail(email);
+}
 exports.validateSignUpData = (newUser) =>{
     let errors = {};
+
+    if(isEmpty(newUser.name)){
+        errors.name = 'Name must not be empty';
+    }else if(newUser.name.length < 4){
+        errors.name = 'Name is too short'
+    }
+    if(isEmpty(newUser.phone)){
+        errors.phone = 'Phone must not be empty';
+    }else if(newUser.phone.length < 10){
+        errors.phone = 'Phone is too short'
+    }
+
     if(isEmpty(newUser.email)){
         errors.email = 'Email must not be empty';
     }else if(!isEmail(newUser.email)){
-        erros.email = 'Must be a valid email address';
+        errors.email = 'Must be a valid email address';
     }
     if(isEmpty(newUser.password)){
         errors.password = 'Password must not be empty';

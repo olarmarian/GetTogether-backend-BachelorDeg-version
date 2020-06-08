@@ -176,6 +176,108 @@ exports.getLocalsByTag = async (req, res) => {
         return res.status(500).json({error:err.code});
     })
 }
+
+exports.getFilteredLocals = async (req, res) => {
+    const filters = {
+        tag: req.params.tag,
+        specific: req.params.specific
+    }
+   
+    console.log(filters.tag)
+    let locals = [];
+   
+    if(filters.tag === "all" && filters.specific !== "all"){
+        await db.collection('locals')
+        .where('specific','array-contains', filters.specific)
+        .get()
+        .then(doc => {
+            doc.forEach(data => {
+                locals.push({
+                    localId:data.id,
+                    userId:data.data().userEmail,
+                    name:data.data().name,
+                    searchName:data.data().searchName,
+                    location:data.data().location,
+                    specific:data.data().specific,
+                    phone:data.data().phone,
+                    tags:data.data().tags,
+                    imagesUrl: []
+                })
+            })
+        })
+        .catch(err => {
+            console.error(err);
+            return res.status(500).json({error:err.code});
+        })
+    }else if(filters.tag !== "all"){
+        await db.collection('locals')
+            .where('tags','array-contains', '#' + filters.tag)
+            .get()
+            .then(doc => {
+                doc.forEach(data => {
+                    if(filters.specific === "all" || data.data().specific.includes(filters.specific)){
+                        locals.push({
+                            localId:data.id,
+                            userId:data.data().userEmail,
+                            name:data.data().name,
+                            searchName:data.data().searchName,
+                            location:data.data().location,
+                            specific:data.data().specific,
+                            phone:data.data().phone,
+                            tags:data.data().tags,
+                            imagesUrl: []
+                        })
+                    }
+                })
+            })
+            .catch(err => {
+                console.error(err);
+                return res.status(500).json({error:err.code});
+            })
+    }else{
+        await db.collection('locals')
+            .orderBy('location','asc')    
+            .get()
+            .then(doc => {
+                doc.forEach(data => {
+                    locals.push({
+                        localId:data.id,
+                        userEmail:data.data().userEmail,
+                        name:data.data().name,
+                        searchName:data.data().searchName,
+                        location:data.data().location,
+                        specific:data.data().specific,
+                        phone:data.data().phone,
+                        tags:data.data().tags,
+                        imagesUrl:[]
+                    })
+                })
+            })
+            .catch(err => {
+                console.error(err);
+                return res.status(500).json({error:err.code});
+            })
+    
+    }
+
+    await db.collection('images')
+    .get()
+    .then(doc => {
+        doc.forEach(data=>{
+            locals.forEach(local => {
+                if( local.localId === data.data().localId){
+                    local.imagesUrl.push(data.data().imageUrl);
+                }
+            })
+        })
+        return res.status(200).json(locals);
+    })
+    .catch(err => {
+        console.error(err);
+        return res.status(500).json({error:err.code});
+    })
+}
+
 exports.getLocalsBySpecific = async (req, res) => {
     let locals = [];
     await db.collection('locals')
@@ -379,7 +481,7 @@ exports.getLocalsByName = async (req, res) => {
                 doc.forEach(data => {
                     locals.push({
                         localId:data.id,
-                        userId:data.data().userEmail,
+                        userEmail:data.data().userEmail,
                         name:data.data().name,
                         searchName:data.data().searchName,
                         location:data.data().location,
