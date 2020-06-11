@@ -31,6 +31,7 @@ const {
     saveLocalMenu,
     updateLocalMenu,
     uploadImage,
+    deleteImage,
     getTheNewest,
     getTheMostPopular,
     getTheBiggestRate,
@@ -88,6 +89,7 @@ app.post('/locals/:localId/menu/save',FBAuth,saveLocalMenu);
 app.post('/locals/:localId/menu/edit',FBAuth,updateLocalMenu);
 app.post('/locals/:localId/edit',FBAuth,updateLocal);
 app.post('/locals/:localId/upload',FBAuth,uploadImage);
+app.delete('/locals/image', FBAuth, deleteImage);
 app.post('/locals/:localId/review',FBAuth,reviewLocal);
 app.delete('/locals/:localId/delete',FBAuth,deleteLocal);
 

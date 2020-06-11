@@ -31,7 +31,10 @@ exports.getLocals = async (req, res) => {
         doc.forEach(data=>{
             locals.forEach(local => {
                 if( local.localId === data.data().localId){
-                    local.imagesUrl.push(data.data().imageUrl);
+                    local.imagesUrl.push({
+                        id: data.id,
+                        imageUrl: data.data().imageUrl
+                    });
                 }
             })
         })
@@ -74,7 +77,10 @@ exports.getUserLocal = async (req, res) => {
     .then(doc => {
         doc.forEach(data=>{
             if( local.localId === data.data().localId){
-                local.imagesUrl.push(data.data().imageUrl);
+                local.imagesUrl.push({
+                    id: data.id,
+                    imageUrl: data.data().imageUrl
+                });
             }
         })
         return res.status(200).json(local);
@@ -165,7 +171,10 @@ exports.getLocalsByTag = async (req, res) => {
         doc.forEach(data=>{
             locals.forEach(local => {
                 if( local.localId === data.data().localId){
-                    local.imagesUrl.push(data.data().imageUrl);
+                    local.imagesUrl.push({
+                        id: data.id,
+                        imageUrl: data.data().imageUrl
+                    });
                 }
             })
         })
@@ -266,7 +275,10 @@ exports.getFilteredLocals = async (req, res) => {
         doc.forEach(data=>{
             locals.forEach(local => {
                 if( local.localId === data.data().localId){
-                    local.imagesUrl.push(data.data().imageUrl);
+                    local.imagesUrl.push({
+                        id: data.id,
+                        imageUrl: data.data().imageUrl
+                    });
                 }
             })
         })
@@ -309,7 +321,10 @@ exports.getLocalsBySpecific = async (req, res) => {
                 doc.forEach(data=>{
                     locals.forEach(local => {
                         if( local.localId === data.data().localId){
-                            local.imagesUrl.push(data.data().imageUrl);
+                            local.imagesUrl.push({
+                                id: data.id,
+                                imageUrl: data.data().imageUrl
+                            });
                         }
                     })
                 })
@@ -352,7 +367,10 @@ exports.getTheNewest = async (req, res) => {
                     doc.forEach(data=>{
                         locals.forEach(local => {
                             if( local.localId === data.data().localId){
-                                local.imagesUrl.push(data.data().imageUrl);
+                                local.imagesUrl.push({
+                                    id: data.id,
+                                    imageUrl: data.data().imageUrl
+                                });
                             }
                         })
                     })
@@ -503,7 +521,10 @@ exports.getLocalsByName = async (req, res) => {
                 doc.forEach(data=>{
                     locals.forEach(local => {
                         if( local.localId === data.data().localId){
-                            local.imagesUrl.push(data.data().imageUrl);
+                            local.imagesUrl.push({
+                                id: data.id,
+                                imageUrl: data.data().imageUrl
+                            });
                         }
                     })
                 })
@@ -546,7 +567,10 @@ exports.getLocalsByLocation = async (req, res) => {
                     doc.forEach(data=>{
                         locals.forEach(local => {
                             if( local.localId === data.data().localId){
-                                local.imagesUrl.push(data.data().imageUrl);
+                                local.imagesUrl.push({
+                                    id: data.id,
+                                    imageUrl: data.data().imageUrl
+                                });
                             }
                         })
                     })
@@ -644,16 +668,16 @@ exports.deleteLocal = async (req, res) => {
                 console.error(err);
                 return res.status(500).json({error:err.code});
             })
-
 }
 
 exports.updateLocal = async (req, res) => {
+    console.log(req.body)
     await db.doc(`/locals/${req.params.localId}`)
         .get()
         .then(doc => {
             return doc.ref.update({
                 name:req.body.name,
-                searchName:req.body.name.replace(" ","-").toLowerCase(),
+                searchName:req.body.searchName,
                 location:req.body.location,
                 specific:req.body.specific,
                 phone:req.body.phone,
@@ -661,11 +685,11 @@ exports.updateLocal = async (req, res) => {
             })
         })
         .then(()=>{
-            res.status(200).json({message:"Local updated successfully"})
+            return res.status(200).json({message:"Local updated successfully"})
         })
         .catch(err => {
             console.error(err);
-            res.status(500).json({error:err.code});
+            return res.status(500).json({error:err.code});
         })
 }
 
@@ -700,7 +724,9 @@ exports.getLocalSpecificsCategories = async ( req, res ) => {
         "mancare romaneasca",
         "fructe de mare", 
         "cafea", 
-        "bar", 
+        "bar",
+        "vin",
+        "paste",
         "catering", 
         "mancare frantuzeasca", 
         "mancare vegetariana"]
@@ -717,7 +743,9 @@ exports.getLocalTagsCategories = async ( req, res ) => {
         "#narghilea",
         "#steakhouse",
         "#barbeque",
-        "#club"
+        "#club",
+        "#italian",
+        "#romantic"
     ]
 
     return res.status(200).json(tags);
@@ -782,8 +810,21 @@ exports.uploadImage = async (req, res) => {
             })
             .catch((err) => {
                 console.error(err);
-                return res.status(500).json({error:err+"sss"});
+                return res.status(500).json({error:err + "ss"});
             });
     });
     await busboy.end(req.rawBody);
+}
+
+exports.deleteImage = async (req, res) => {
+    await db.collection('images')
+            .doc(req.body.imageId)
+            .delete()
+            .then(() => {
+                return res.status(200).json({message:"Image deleted successfully"});
+            })
+            .catch(err => {
+                console.error(err);
+                return res.status(500).json({error:err.code});
+            })
 }
