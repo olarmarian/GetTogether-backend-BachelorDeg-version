@@ -745,6 +745,7 @@ exports.getLocalTagsCategories = async ( req, res ) => {
         "#barbeque",
         "#club",
         "#italian",
+        "#irish",
         "#romantic"
     ]
 

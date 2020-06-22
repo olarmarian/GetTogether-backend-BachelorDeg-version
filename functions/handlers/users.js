@@ -182,32 +182,26 @@ exports.reservationsHistory = async (req, res) => {
             })
 }
 
-exports.saveReservation = async (req, res) => {
-    const reservation = {
-        userId:req.user.uid,
-        localId:req.body.localId,
-        localName:req.body.localName,
-        hour:req.body.hour,
-        seats:req.body.seats,
-        date:req.body.date,
-        createdAt:new Date().toISOString(),
-        status:"waiting"
+
+exports.updateProfile = async (req, res) => {
+    const user = {
+        name:req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
     }
-    await db.collection("reservations")
-            .add(reservation)
-            .then(doc => {
-                const newReservation = reservation;
-                newReservation.reservationId = doc.id;
-                return res.status(201).json(newReservation);
-            })
-            .catch(err => {
-                console.error(err);
-                return res.status(500).json({error:err.code});
-            })
-}
-
-exports.rejectReservation = async (req, res) => {
-
+    
+    await db.doc(`users/${req.params.userId}`)
+        .get()
+        .then(doc => {
+            return doc.ref.update(user)
+        })
+        .then(() => {
+            return res.status(200).json({message: "Profile updated successfully"})
+        })
+        .catch(err => {
+            console.log(err);
+            return res.status(500).json({error:err.code});
+        })
 }
 
 

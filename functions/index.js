@@ -9,10 +9,7 @@ const cors = require('cors');
 const {
     signup,
     login,
-    searchHistory,
-    reservationsHistory,
-    saveReservation,
-    rejectReservation,
+    updateProfile,
     getAccount,
     addNewsletterEmail
 } = require('./handlers/users');
@@ -61,11 +58,8 @@ app.delete('/admin/locals/:localId/delete',()=>{});
 app.post('/users/signup',signup);
 app.post('/users/login',login);
 app.get('/users/:userId',getAccount);
-app.get('/users/:userId/search-history',searchHistory);
-app.get('/users/:userId/reservations-history',FBAuth,reservationsHistory);
-app.post('/users/reservation/save',FBAuth,saveReservation);
-app.get('/users/reservation/:reservationId/reject',FBAuth,rejectReservation);
 app.post('/newsletter', addNewsletterEmail);
+app.put('/users/:userId/edit', updateProfile);
 
 //Locals routes
 app.get('/locals',getLocals);
